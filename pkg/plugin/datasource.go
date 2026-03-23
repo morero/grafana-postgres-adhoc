@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
@@ -42,6 +44,20 @@ func NewDatasource(ctx context.Context, settings backend.DataSourceInstanceSetti
 	if ds.SSLMode == "" {
 		ds.SSLMode = "disable"
 	}
+
+	// Fallback: parse host/port from the URL field if not in jsonData
+	if ds.Host == "" && settings.URL != "" {
+		parts := strings.SplitN(settings.URL, ":", 2)
+		ds.Host = parts[0]
+		if len(parts) > 1 {
+			if p, err := strconv.Atoi(parts[1]); err == nil {
+				ds.Port = p
+			}
+		}
+	}
+	if ds.Port == 0 {
+		ds.Port = 5432
+	}
 	if ds.AdhocSchema == "" {
 		ds.AdhocSchema = "public"
 	}
@@ -55,6 +71,8 @@ func NewDatasource(ctx context.Context, settings backend.DataSourceInstanceSetti
 		"host=%s port=%d dbname=%s user=%s password=%s sslmode=%s",
 		ds.Host, ds.Port, ds.Database, ds.User, password, ds.SSLMode,
 	)
+
+	logger.Info("Connecting to PostgreSQL", "host", ds.Host, "port", ds.Port, "database", ds.Database, "user", ds.User, "connStr_redacted", fmt.Sprintf("host=%s port=%d dbname=%s user=%s sslmode=%s", ds.Host, ds.Port, ds.Database, ds.User, ds.SSLMode))
 
 	pool, err := pgxpool.New(ctx, connStr)
 	if err != nil {
