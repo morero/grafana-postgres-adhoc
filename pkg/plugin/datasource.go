@@ -67,12 +67,13 @@ func NewDatasource(ctx context.Context, settings backend.DataSourceInstanceSetti
 
 	password := settings.DecryptedSecureJSONData["password"]
 
+	// Use URL format which is more reliable with pgx
 	connStr := fmt.Sprintf(
-		"host=%s port=%d dbname=%s user=%s password=%s sslmode=%s",
-		ds.Host, ds.Port, ds.Database, ds.User, password, ds.SSLMode,
+		"postgres://%s:%s@%s:%d/%s?sslmode=%s",
+		ds.User, password, ds.Host, ds.Port, ds.Database, ds.SSLMode,
 	)
 
-	logger.Info("Connecting to PostgreSQL", "host", ds.Host, "port", ds.Port, "database", ds.Database, "user", ds.User, "connStr_redacted", fmt.Sprintf("host=%s port=%d dbname=%s user=%s sslmode=%s", ds.Host, ds.Port, ds.Database, ds.User, ds.SSLMode))
+	logger.Info("Connecting to PostgreSQL", "host", ds.Host, "port", ds.Port, "database", ds.Database, "user", ds.User)
 
 	pool, err := pgxpool.New(ctx, connStr)
 	if err != nil {
