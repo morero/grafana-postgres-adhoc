@@ -122,24 +122,29 @@ func (d *Datasource) QueryData(ctx context.Context, req *backend.QueryDataReques
 }
 
 func (d *Datasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	// req.URL contains the full path + query string, e.g. "tag-values?key=team"
+	// req.Path contains just the path, e.g. "tag-values"
+	logger.Info("CallResource", "path", req.Path, "url", req.URL, "method", req.Method)
+
 	switch req.Path {
 	case "tag-keys":
 		return d.handleTagKeys(ctx, sender)
 	case "tag-values":
 		key := ""
+		// Parse key from the full URL (path + query string)
 		if req.URL != "" {
-			// Parse key from query string
-			if parsed, err := http.NewRequest("GET", "http://localhost?"+req.URL, nil); err == nil {
+			if parsed, err := http.NewRequest("GET", "http://localhost/"+req.URL, nil); err == nil {
 				key = parsed.URL.Query().Get("key")
 			}
 		}
 		if key == "" {
-			// Try parsing from body
+			// Try parsing from body (POST requests)
 			var body map[string]string
 			if err := json.Unmarshal(req.Body, &body); err == nil {
 				key = body["key"]
 			}
 		}
+		logger.Info("Tag values request", "key", key)
 		return d.handleTagValues(ctx, key, sender)
 	default:
 		return sender.Send(&backend.CallResourceResponse{Status: 404, Body: []byte("not found")})
