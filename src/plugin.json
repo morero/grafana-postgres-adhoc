@@ -1,0 +1,21 @@
+{
+  "type": "datasource",
+  "name": "PostgreSQL + Ad-Hoc",
+  "id": "postgres-adhoc-datasource",
+  "backend": true,
+  "executable": "gpx_postgres_adhoc",
+  "alerting": false,
+  "info": {
+    "description": "PostgreSQL/TimescaleDB datasource with ad-hoc filter support for wide events",
+    "author": { "name": "morero" },
+    "version": "1.0.0",
+    "logos": {
+      "small": "img/logo.svg",
+      "large": "img/logo.svg"
+    }
+  },
+  "dependencies": {
+    "grafanaDependency": ">=11.0.0",
+    "plugins": []
+  }
+}
